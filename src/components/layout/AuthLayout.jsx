@@ -2,77 +2,77 @@ import { Link } from 'react-router-dom'
 import { ROUTES } from '../../utils/constants'
 
 const FEATURES = [
-  'Apply for courses in one place',
-  'Track leave requests and approvals',
-  'Secure student and admin access',
+  { icon: '📚', text: 'Apply for courses in one click' },
+  { icon: '📅', text: 'Submit leave with date & attachment' },
+  { icon: '🛡', text: 'Role-based secure access control' },
+  { icon: '📊', text: 'Real-time status tracking' },
 ]
 
 export default function AuthLayout({ children, title, subtitle }) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col lg:flex-row">
-        <aside className="hidden lg:flex lg:w-[44%] xl:w-[42%]">
-          <div className="flex w-full flex-col justify-between bg-slate-900 px-10 py-12 text-white xl:px-14">
-            <div>
-              <Link to={ROUTES.HOME} className="inline-flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-                  <span className="text-sm font-bold tracking-[0.18em]">SC</span>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold tracking-tight">SMIT Connect</p>
-                  <p className="text-sm text-slate-300">Student Management Portal</p>
-                </div>
-              </Link>
-            </div>
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex lg:w-[46%] xl:w-1/2 relative bg-gradient-to-br from-primary-950 via-primary-800 to-primary-600 flex-col justify-between p-12 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-white/5" />
+        <div className="absolute -bottom-40 -right-24 w-[500px] h-[500px] rounded-full bg-white/5" />
+        <div className="absolute top-1/3 right-10 w-48 h-48 rounded-full bg-primary-500/30" />
 
-            <div className="max-w-md">
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">
-                Saylani Mass IT Training
-              </p>
-              <h1 className="text-4xl font-semibold leading-tight xl:text-5xl">
-                A clear place to manage courses, applications, and student activity.
-              </h1>
-              <p className="mt-5 max-w-sm text-base leading-7 text-slate-300">
-                Sign in or create your account to continue with SMIT Connect.
-              </p>
-              <div className="mt-10 space-y-3">
-                {FEATURES.map((item) => (
-                  <div key={item} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400">
-              Copyright {new Date().getFullYear()} SMIT Connect Portal
-            </p>
+        {/* Logo */}
+        <Link to={ROUTES.HOME} className="relative flex items-center gap-3">
+          <div className="w-11 h-11 bg-white/15 rounded-2xl flex items-center justify-center border border-white/20">
+            <span className="text-2xl">🎓</span>
           </div>
-        </aside>
-
-        <main className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8 lg:px-14">
-          <div className="w-full max-w-md">
-            <div className="mb-8 lg:hidden">
-              <Link to={ROUTES.HOME} className="inline-flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-600 text-sm font-bold tracking-[0.18em] text-white">
-                  SC
-                </div>
-                <div>
-                  <p className="font-semibold tracking-tight text-gray-900">SMIT Connect</p>
-                  <p className="text-sm text-gray-500">Student Management Portal</p>
-                </div>
-              </Link>
-            </div>
-
-            <div className="rounded-[28px] border border-gray-200 bg-white p-7 shadow-card sm:p-8">
-              <div className="mb-7">
-                <h2 className="text-3xl font-semibold tracking-tight text-gray-900">{title}</h2>
-                <p className="mt-2 text-sm leading-6 text-gray-500">{subtitle}</p>
-              </div>
-              {children}
-            </div>
+          <div>
+            <p className="text-white font-bold text-xl tracking-tight leading-none">SMIT Connect</p>
+            <p className="text-primary-200 text-xs font-medium mt-0.5">Student Management Portal</p>
           </div>
-        </main>
+        </Link>
+
+        {/* Hero */}
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6">
+            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-white/90 text-xs font-semibold">SMIT — Saylani Mass IT Training</span>
+          </div>
+          <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] tracking-tight mb-5">
+            Your academic<br />
+            <span className="text-primary-200">journey starts</span><br />
+            right here.
+          </h1>
+          <p className="text-primary-200 text-base leading-relaxed mb-8 max-w-sm">
+            Manage admissions, courses, and leave requests from a single powerful platform.
+          </p>
+          <div className="space-y-3">
+            {FEATURES.map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <span className="text-lg">{icon}</span>
+                <span className="text-primary-100 text-sm font-medium">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative text-primary-300 text-xs">© {new Date().getFullYear()} SMIT Connect Portal.</p>
+      </div>
+
+      {/* Right form panel */}
+      <div className="flex-1 flex flex-col justify-center bg-gray-50 px-5 py-10 sm:px-10 lg:px-16 xl:px-20">
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-10">
+          <Link to={ROUTES.HOME} className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center">
+              <span className="text-white text-lg">🎓</span>
+            </div>
+            <span className="font-bold text-gray-900 text-lg">SMIT Connect</span>
+          </Link>
+        </div>
+        <div className="w-full max-w-md mx-auto">
+          <div className="mb-7">
+            <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">{title}</h2>
+            <p className="text-gray-500 text-sm mt-1.5 font-medium">{subtitle}</p>
+          </div>
+          {children}
+        </div>
       </div>
     </div>
   )

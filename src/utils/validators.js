@@ -1,7 +1,7 @@
 export const isValidEmail      = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim())
 export const isValidPassword   = v => String(v).length >= 6
 export const isValidCNIC       = v => /^\d{13}$/.test(String(v).trim())
-export const isValidRollNumber = v => /^[A-Za-z0-9-]{2,20}$/.test(String(v).trim())
+export const isValidRollNumber = v => /^[A-Za-z0-9\-]{2,20}$/.test(String(v).trim())
 
 export function validateStudentRow(row, index) {
   const errors = []

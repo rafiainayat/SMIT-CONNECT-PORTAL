@@ -11,151 +11,107 @@ import FormInput from '../components/ui/FormInput'
 import Spinner from '../components/ui/Spinner'
 
 export default function LoginPage() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const [role, setRole] = useState('student')
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
+  const dispatch  = useDispatch()
+  const navigate  = useNavigate()
+  const [role, setRole]         = useState('student')
+  const [form, setForm]         = useState({ email: '', password: '' })
+  const [errors, setErrors]     = useState({})
+  const [loading, setLoading]   = useState(false)
   const [showPass, setShowPass] = useState(false)
 
-  const handleChange = (event) => {
-    const { name, value } = event.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+  const handleChange = e => {
+    const { name, value } = e.target
+    setForm(p => ({ ...p, [name]: value }))
+    if (errors[name]) setErrors(p => ({ ...p, [name]: '' }))
   }
 
   const validate = () => {
-    const nextErrors = {}
-    if (!form.email) nextErrors.email = 'Email is required'
-    else if (!isValidEmail(form.email)) nextErrors.email = 'Enter a valid email'
-    if (!form.password) nextErrors.password = 'Password is required'
-    else if (form.password.length < 6) nextErrors.password = 'Min 6 characters'
-    setErrors(nextErrors)
-    return !Object.keys(nextErrors).length
+    const e = {}
+    if (!form.email) e.email = 'Email is required'
+    else if (!isValidEmail(form.email)) e.email = 'Enter a valid email'
+    if (!form.password) e.password = 'Password is required'
+    else if (form.password.length < 6) e.password = 'Min 6 characters'
+    setErrors(e)
+    return !Object.keys(e).length
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  const handleSubmit = async e => {
+    e.preventDefault()
     if (!validate() || loading) return
-
     setLoading(true)
-    const toastId = toast.loading(`Signing in as ${role === 'admin' ? 'Admin' : 'Student'}...`)
-
+    const tid = toast.loading(`Signing in as ${role === 'admin' ? 'Admin' : 'Student'}…`)
     try {
       const { user, profile } = await loginUser(form)
-
       if (profile.role !== role) {
         await logoutUser()
-        toast.error(`This account is not a${role === 'admin' ? 'n admin' : ' student'} account.`, { id: toastId })
+        toast.error(`This account is not a${role === 'admin' ? 'n admin' : ' student'} account.`, { id: tid })
         setLoading(false)
         return
       }
-
       dispatch(setUser({ user, profile }))
-      toast.success(`Welcome back, ${profile.name}!`, { id: toastId })
+      toast.success(`Welcome back, ${profile.name}! 👋`, { id: tid })
       navigate(profile.role === ROLES.ADMIN ? ROUTES.ADMIN.DASHBOARD : ROUTES.STUDENT.DASHBOARD, { replace: true })
-    } catch (error) {
-      toast.error(error.message, { id: toastId })
-      setErrors({ general: error.message })
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) {
+      toast.error(err.message, { id: tid })
+      setErrors({ general: err.message })
+    } finally { setLoading(false) }
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your SMIT Connect account.">
-      <div className="mb-6 flex rounded-2xl bg-gray-100 p-1">
-        {[
-          { id: 'student', label: 'Student' },
-          { id: 'admin', label: 'Admin' },
-        ].map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => {
-              setRole(id)
-              setErrors({})
-            }}
-            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
-              role === id ? 'border border-gray-200 bg-white text-primary-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
+    <AuthLayout title="Welcome back" subtitle="Sign in to your SMIT Connect account">
+      {/* Role toggle */}
+      <div className="flex p-1 bg-gray-100 rounded-2xl mb-7 gap-1">
+        {[{ id: 'student', label: '🎓 Student' }, { id: 'admin', label: '🛡 Admin' }].map(({ id, label }) => (
+          <button key={id} type="button" onClick={() => { setRole(id); setErrors({}) }}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
+              ${role === id ? 'bg-white text-primary-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
             {label}
           </button>
         ))}
       </div>
 
-      <div
-        className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${
-          role === 'admin' ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-sky-200 bg-sky-50 text-sky-700'
-        }`}
-      >
-        {role === 'admin' ? 'Admin access for portal management.' : 'Student access for courses and leave requests.'}
+      {/* Role info banner */}
+      <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-semibold border
+        ${role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+        {role === 'admin' ? '🛡 Admin login — full system control' : '🎓 Student — courses & leave management'}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {errors.general && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {errors.general}
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium">
+            ⚠ {errors.general}
           </div>
         )}
 
-        <FormInput
-          id="email"
-          name="email"
-          type="email"
-          label="Email address"
-          placeholder="you@example.com"
-          value={form.email}
-          onChange={handleChange}
-          error={errors.email}
-          autoComplete="email"
-          required
+        <FormInput id="email" name="email" type="email" label="Email address"
+          placeholder="you@example.com" value={form.email} onChange={handleChange}
+          error={errors.email} autoComplete="email" required
+          leftIcon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>}
         />
 
-        <FormInput
-          id="password"
-          name="password"
-          type={showPass ? 'text' : 'password'}
-          label="Password"
-          placeholder="Enter your password"
-          value={form.password}
-          onChange={handleChange}
-          error={errors.password}
-          autoComplete="current-password"
-          required
-          rightElement={(
-            <button
-              type="button"
-              onClick={() => setShowPass((prev) => !prev)}
-              className="text-xs font-medium text-gray-400 transition-colors hover:text-gray-600"
-            >
-              {showPass ? 'Hide' : 'Show'}
-            </button>
-          )}
+        <FormInput id="password" name="password" type={showPass ? 'text' : 'password'}
+          label="Password" placeholder="••••••••" value={form.password}
+          onChange={handleChange} error={errors.password} autoComplete="current-password" required
+          leftIcon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
+          rightElement={<button type="button" onClick={() => setShowPass(p => !p)} className="text-xs font-semibold text-gray-400 hover:text-primary-600 transition-colors">{showPass ? 'Hide' : 'Show'}</button>}
         />
 
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => toast('Enter your email and contact admin if you need a reset.')}
-            className="text-sm font-medium text-primary-600 hover:text-primary-700"
-          >
+          <button type="button" onClick={() => toast('Password reset — enter your email below and contact admin.', { icon: 'ℹ️' })}
+            className="text-sm text-primary-600 hover:text-primary-700 font-semibold">
             Forgot password?
           </button>
         </div>
 
-        <button type="submit" disabled={loading} className="btn-primary h-11 w-full text-base">
-          {loading ? <><Spinner size="sm" /> Signing in...</> : `Sign in as ${role === 'admin' ? 'Admin' : 'Student'}`}
+        <button type="submit" disabled={loading}
+          className={`btn-primary w-full h-12 text-sm font-bold ${role === 'admin' ? '!bg-purple-600 hover:!bg-purple-700' : ''}`}>
+          {loading ? <><Spinner size="sm" /> Signing in…</> : `Sign in as ${role === 'admin' ? 'Admin 🛡' : 'Student 🎓'}`}
         </button>
 
         {role === 'student' && (
           <p className="text-center text-sm text-gray-500">
-            Do not have an account?{' '}
-            <Link to={ROUTES.SIGNUP} className="font-semibold text-primary-600 hover:text-primary-700">
-              Sign up
-            </Link>
+            No account?{' '}
+            <Link to={ROUTES.SIGNUP} className="text-primary-600 font-bold hover:text-primary-700">Create one →</Link>
           </p>
         )}
       </form>
