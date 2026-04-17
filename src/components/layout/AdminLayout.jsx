@@ -1,146 +1,150 @@
-/**
- * AdminLayout Component
- * 
- * Sidebar navigation for admin dashboard
- */
-
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Outlet } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { selectProfile, clearUser } from '../../features/auth/authSlice'
 import { logoutUser } from '../../services/authService'
 import { ROUTES } from '../../utils/constants'
-import { getInitials } from '../../utils/formatters'
 import Spinner from '../ui/Spinner'
-import toast from 'react-hot-toast'
 
-const ADMIN_MENU = [
-  { label: 'Dashboard', path: ROUTES.ADMIN.DASHBOARD, icon: '📊' },
-  { label: 'Students', path: ROUTES.ADMIN.STUDENTS, icon: '👥' },
-  { label: 'Courses', path: ROUTES.ADMIN.COURSES, icon: '📚' },
-  { label: 'Leaves', path: ROUTES.ADMIN.LEAVES, icon: '📅' },
-  { label: 'Settings', path: ROUTES.ADMIN.SETTINGS, icon: '⚙️' },
+const NAV = [
+  { to: ROUTES.ADMIN.DASHBOARD, label: 'Dashboard', icon: '🏠' },
+  { to: ROUTES.ADMIN.STUDENTS,  label: 'Students',  icon: '👥' },
+  { to: ROUTES.ADMIN.COURSES,   label: 'Courses',   icon: '📚' },
+  { to: ROUTES.ADMIN.LEAVES,    label: 'Leaves',    icon: '📅' },
+  { to: ROUTES.ADMIN.SETTINGS,  label: 'Settings',  icon: '⚙️' },
 ]
 
-export default function AdminLayout() {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const profile = useSelector(selectProfile)
+function SidebarInner({ profile, onClose, onLogout, loggingOut }) {
+  const initials = profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'
+  return (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 h-[68px] border-b border-gray-100 flex-shrink-0">
+        <div className="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center shadow-sm">
+          <span className="text-white text-lg">🎓</span>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-gray-900 leading-none">SMIT Connect</p>
+          <p className="text-[10px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">Admin Panel</p>
+        </div>
+      </div>
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest px-3 mb-3">Navigation</p>
+        {NAV.map(({ to, label, icon }) => (
+          <NavLink key={to} to={to} onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150
+              ${isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}`
+            }>
+            <span className="text-base flex-shrink-0">{icon}</span>
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Profile + logout */}
+      <div className="flex-shrink-0 p-3 border-t border-gray-100 space-y-1">
+        <div className="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-xl">
+          <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900 truncate leading-none">{profile?.name}</p>
+            <p className="text-xs text-gray-400 truncate mt-0.5">{profile?.email}</p>
+          </div>
+          <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 flex-shrink-0">Admin</span>
+        </div>
+        <button onClick={onLogout} disabled={loggingOut}
+          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50">
+          {loggingOut ? <Spinner size="sm" /> : <span>🚪</span>}
+          {loggingOut ? 'Signing out…' : 'Sign out'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function AdminLayout() {
+  const dispatch  = useDispatch()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const profile   = useSelector(selectProfile)
+  const [open, setOpen]          = useState(false)
+  const [loggingOut, setLogging] = useState(false)
 
   const handleLogout = async () => {
-    setLoggingOut(true)
+    setLogging(true)
+    const tid = toast.loading('Signing out…')
     try {
       await logoutUser()
       dispatch(clearUser())
-      toast.success('Logged out successfully')
-      navigate(ROUTES.HOME)
-    } catch (err) {
-      toast.error(err.message)
-    } finally {
-      setLoggingOut(false)
-    }
+      toast.success('Signed out successfully!', { id: tid })
+      navigate(ROUTES.LOGIN, { replace: true })
+    } catch (err) { toast.error(err.message, { id: tid }) }
+    finally { setLogging(false) }
   }
 
-  const isActive = (path) => window.location.pathname === path
+  const initials     = profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'
+  const currentPage  = NAV.find(n => location.pathname === n.to)?.label || 'Admin Panel'
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside className={`fixed md:relative w-64 h-screen bg-gray-900 text-white transform transition-transform md:translate-x-0 z-40 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        {/* Close button (mobile) */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-800 flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <span className="font-bold text-lg">SMIT Admin</span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="px-4 py-6 space-y-1 flex-1 overflow-y-auto">
-          {ADMIN_MENU.map(item => (
-            <button
-              key={item.path}
-              onClick={() => {
-                navigate(item.path)
-                setSidebarOpen(false)
-              }}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 text-sm font-medium ${
-                isActive(item.path)
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* User Profile & Logout */}
-        <div className="border-t border-gray-800 p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center font-bold text-sm">
-              {getInitials(profile?.name)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{profile?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{profile?.email}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-red-400 transition-colors disabled:opacity-50"
-          >
-            {loggingOut ? <Spinner size="sm" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>}
-            {loggingOut ? 'Signing out...' : 'Sign out'}
-          </button>
-        </div>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-100 flex-shrink-0" style={{ boxShadow: '2px 0 20px -5px rgb(0 0 0/.08)' }}>
+        <SidebarInner profile={profile} onClose={() => {}} onLogout={handleLogout} loggingOut={loggingOut} />
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1">
-        {/* Top Bar (Mobile toggle) */}
-        <header className="md:hidden bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-30">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <span className="font-semibold text-gray-900">SMIT Connect</span>
-          <div className="w-6" /> {/* Spacer for centering */}
+      {/* Mobile overlay */}
+      {open && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />
+          <aside className="relative w-72 bg-white shadow-modal flex flex-col z-10 animate-slide-down">
+            <SidebarInner profile={profile} onClose={() => setOpen(false)} onLogout={handleLogout} loggingOut={loggingOut} />
+          </aside>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Topbar */}
+        <header className="h-[68px] bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div>
+              <p className="text-base font-bold text-gray-900 leading-none">{currentPage}</p>
+              <p className="text-xs text-gray-400 font-medium mt-0.5 hidden sm:block">
+                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button onClick={handleLogout} disabled={loggingOut}
+              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all disabled:opacity-50">
+              {loggingOut ? <Spinner size="sm" /> : '🚪'}
+              <span className="hidden md:inline">{loggingOut ? 'Signing out…' : 'Sign out'}</span>
+            </button>
+            <div className="flex items-center gap-2.5">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-gray-900 leading-none">{profile?.name?.split(' ')[0]}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Administrator</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold">
+                {initials}
+              </div>
+            </div>
+          </div>
         </header>
 
-        {/* Page Content */}
-        <div className="bg-gray-50 min-h-screen p-4 md:p-8">
-          <Outlet />
-        </div>
-      </main>
+        <main className="flex-1 overflow-y-auto"><Outlet /></main>
+      </div>
     </div>
   )
 }
